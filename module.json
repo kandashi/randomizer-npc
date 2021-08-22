@@ -4,6 +4,13 @@
 	"description": "A simple module to automatically randomize low level NPC stats",
 	"author": "Kandashi",
 	"version": "0.0.1",
+	"authors": [
+		{
+		  "name": "Kandashi",
+		  "url": "https://github.com/Kandashi",
+		  "discord": "Kandashi (He/Him)#6698"
+		}
+	  ],
 	"minimumCoreVersion": "0.7.5",
 	"compatibleCoreVersion": "0.7.7",
 	"system": "dnd5e",
@@ -19,5 +26,8 @@
 			"module": "randomizer-npc",
 			"private": false
 		}
-	]
+	],
+	"url": "This is auto replaced",
+	"manifest": "This is auto replaced",
+	"download": "This is auto replaced"
 }
