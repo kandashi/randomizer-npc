@@ -108,22 +108,22 @@ function Randomize(randomization, token) {
         "data": {
             "abilities": {
                 "cha": {
-                    "value": token.actor.data.data.abilities.cha.value + new Roll(randomization).roll().total
+                    "value": token.actor.data.data.abilities.cha.value + new Roll(randomization).roll({async:false}).total
                 },
                 "con": {
-                    "value": token.actor.data.data.abilities.con.value + new Roll(randomization).roll().total
+                    "value": token.actor.data.data.abilities.con.value + new Roll(randomization).roll({async:false}).total
                 },
                 "dex": {
-                    "value": token.actor.data.data.abilities.dex.value + new Roll(randomization).roll().total
+                    "value": token.actor.data.data.abilities.dex.value + new Roll(randomization).roll({async:false}).total
                 },
                 "int": {
-                    "value": token.actor.data.data.abilities.int.value + new Roll(randomization).roll().total
+                    "value": token.actor.data.data.abilities.int.value + new Roll(randomization).roll({async:false}).total
                 },
                 "str": {
-                    "value": token.actor.data.data.abilities.str.value + new Roll(randomization).roll().total
+                    "value": token.actor.data.data.abilities.str.value + new Roll(randomization).roll({async:false}).total
                 },
                 "wis": {
-                    "value": token.actor.data.data.abilities.wis.value + new Roll(randomization).roll().total
+                    "value": token.actor.data.data.abilities.wis.value + new Roll(randomization).roll({async:false}).total
                 }
             }
         }
@@ -132,41 +132,40 @@ function Randomize(randomization, token) {
     token.update({ "actorData": newData })
 }
 
-Hooks.on("createToken", async (tokenData, options, id) => {
-    if(tokenData.isLinked) return;
-    let token = canvas.tokens.get(tokenData._id);
+Hooks.on("createToken", async (tokenDoc, options, id) => {
+    if(tokenDoc.isLinked) return;
     let nameList = game.settings.get("randomizer-npc", "namelist").split(";");
     let randomization = game.settings.get('randomizer-npc', 'randomizer');
 
     if ((game.settings.get('randomizer-npc', 'crRangeEnable') == true)) {
         let crRange = game.settings.get('randomizer-npc', 'crRange')
-        if (token.actor.data.data.details.cr <= crRange) {
-            Randomize(randomization, token)
+        if (tokenDoc.actor.data.data.details.cr <= crRange) {
+            Randomize(randomization, tokenDoc)
         }
     }
-    else if (nameList.includes(tokenData.name)) {
-        Randomize(randomization, token)
+    else if (nameList.includes(tokenDoc.name)) {
+        Randomize(randomization, tokenDoc)
     }
 
     if (game.settings.get("randomizer-npc", "hpRoll")) {
-        const formula = token.actor.data.data.attributes.hp.formula;
+        const formula = tokenDoc.actor.data.data.attributes.hp.formula;
         if (!formula) return;
-        const hp = new Roll(formula).roll().total;
+        const hp = new Roll(formula).roll({async:false}).total;
         AudioHelper.play({ src: CONFIG.sounds.dice });
-        await token.actor.update({ "data.attributes.hp.value": hp, "data.attributes.hp.max": hp });
+        await tokenDoc.actor.update({ "data.attributes.hp.value": hp, "data.attributes.hp.max": hp });
     }
 
     if (game.settings.get("randomizer-npc", "randomizeWeapons")) {
-        let { randomizerMelee, randomizerRanged, randomizerSpellProg } = token.actor.data.flags.dnd5e
-        let meleeWeapons = token.actor.items.filter(i => i.data.data.actionType === "mwak")
-        let rangedWeapons = token.actor.items.filter(i => i.data.data.actionType === "rwak")
-        let spells = token.actor.items.filter(i => i.data.type === "spell")
+        let { randomizerMelee, randomizerRanged, randomizerSpellProg } = tokenDoc.actor.data.flags.dnd5e
+        let meleeWeapons = tokenDoc.actor.items.filter(i => i.data.data.actionType === "mwak")
+        let rangedWeapons = tokenDoc.actor.items.filter(i => i.data.data.actionType === "rwak")
+        let spells = tokenDoc.actor.items.filter(i => i.data.type === "spell")
         let deletedMelee = !!randomizerMelee ? await restrictWeapons(meleeWeapons, randomizerMelee) : []
         let deletedRanged = !!randomizerRanged ? await restrictWeapons(rangedWeapons, randomizerRanged) : []
         let deletedSpells = !!randomizerSpellProg ? await restrictSpells(spells, randomizerSpellProg) : []
         let update = deletedMelee.concat(deletedRanged, deletedSpells)
         if (update.length > 0) {
-            await token.actor.deleteEmbeddedDocuments("Item", update)
+            await tokenDoc.actor.deleteEmbeddedDocuments("Item", update)
         }
     }
 
@@ -175,7 +174,7 @@ Hooks.on("createToken", async (tokenData, options, id) => {
         let pack = !!userPackName ? game.packs.find( i => i.metadata.name === userPackName) : game.packs.find( i => i.metadata.name === "Randomizer Races")
         let index = Math.floor(Math.random() * pack.index.size | 0)
         let race = await pack.getDocument(pack.index.contents[index]._id)
-        await token.actor.createEmbeddedDocuments("Item", [race.data])
+        await tokenDoc.actor.createEmbeddedDocuments("Item", [race.data])
     }
 
 })
